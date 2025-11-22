@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estado de Resultados - Presentación Interactiva</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Georgia, serif;
+            background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%);
+            color: #fff;
+            overflow: hidden;
+        }
+        
+        .slide {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            padding: 40px;
+            position: relative;
+        }
+        
+        .slide.active {
+            display: flex;
+            flex-direction: column;
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .slide-title {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .slide-subtitle {
+            font-size: 24px;
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+        
+        .chart-container {
+            flex: 1;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        .content-container {
+            flex: 1;
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            color: #333;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        
+        .navigation {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            z-index: 1000;
+        }
+        
+        .nav-button {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid white;
+            color: white;
+            padding: 12px 30px;
+            font-size: 18px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+        
+        .nav-button:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+        }
+        
+        .nav-button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        
+        .slide-counter {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            background: rgba(255,255,255,0.2);
+            padding: 10px 20px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            font-size: 18px;
+            z-index: 1000;
+        }
+        
+        /* Slide 1 - Portada */
+        #slide1 {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        #slide1 .slide-title {
+            font-size: 72px;
+            margin-bottom: 20px;
+        }
+        
+        #slide1 .slide-subtitle {
+            font-size: 36px;
+        }
+        
+        .info-text {
+            font-size: 20px;
+            margin-top: 30px;
+            opacity: 0.8;
+        }
+        
+        /* Alertas */
+        .alert {
+            position: absolute;
+            background: #FFF3E0;
+            border: 2px solid #F57C00;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 14px;
+            color: #5D4037;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+        
+        .alert-title {
+            color: #C62828;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+        
+        .footnote {
+            position: absolute;
+            bottom: 50px;
+            left: 40px;
+            font-size: 14px;
+            opacity: 0.7;
+        }
+        
+        /* Tabla de incidencias */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+        
+        table th {
+            background: #2E7D32;
+            color: white;
+            padding: 12px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        table td {
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        
+        table tbody tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        table tbody tr:hover {
+            background: #e8f5e9;
+        }
+        
+        .positive {
+            color: #2E7D32;
+            font-weight: 600;
+        }
+        
+        .negative {
+            color: #C62828;
+            font-weight: 600;
+        }
+        
+        .category-label {
+            text-align: left;
+            font-weight: 600;
+            padding-left: 20px;
+        }
+        
+        /* Estilos para slides personalizadas */
+        .custom-slide-content {
+            display: flex;
+            gap: 30px;
+            height: 100%;
+        }
+        
+        .custom-slide-text {
+            flex: 1;
+            font-size: 18px;
+            line-height: 1.6;
+        }
+        
+        .custom-slide-text h2 {
+            font-size: 32px;
+            color: #2E7D32;
+            margin-bottom: 20px;
+        }
+        
+        .custom-slide-text h3 {
+            font-size: 24px;
+            color: #1565C0;
+            margin: 20px 0 10px 0;
+        }
+        
+        .custom-slide-text ul {
+            margin-left: 30px;
+            margin-top: 15px;
+        }
+        
+        .custom-slide-text li {
+            margin-bottom: 10px;
+        }
+        
+        .custom-slide-image {
+            flex: 0 0 45%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .custom-slide-image img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .highlight-box {
+            background: #E8F5E9;
+            border-left: 4px solid #2E7D32;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-counter">
+        <span id="currentSlide">1</span> / <span id="totalSlides">6</span>
+    </div>
+
+    <!-- Slide 1: Portada -->
+    <div class="slide active" id="slide1">
+        <div class="slide-title">Estado de Resultados</div>
+        <div class="slide-subtitle">Enero - Octubre 2025</div>
+        <div class="info-text">Evolución de Ingresos y Gastos</div>
+        <div class="info-text" style="font-size: 16px; margin-top: 50px;">
+            ← Use las flechas o haga clic en los botones para navegar →
+        </div>
+    </div>
+
+    <!-- Slide 2: Solo Ingresos -->
+    <div class="slide" id="slide2">
+        <div class="slide-title">Ingresos Totales</div>
+        <div class="slide-subtitle">Evolución mensual de enero a octubre 2025</div>
+        <div class="chart-container">
+            <canvas id="chart2"></canvas>
+        </div>
+        <div class="footnote">Fuente: Estado de Resultados 2025</div>
+    </div>
+
+    <!-- Slide 3: Ingresos + Estructura -->
+    <div class="slide" id="slide3">
+        <div class="slide-title">Efecto de Gastos de Estructura</div>
+        <div class="slide-subtitle">Reducción del beneficio bruto por gastos operativos</div>
+        <div class="chart-container">
+            <canvas id="chart3"></canvas>
+        </div>
+        <div class="footnote">Verde: Ingresos | Naranja: Gastos de Estructura</div>
+    </div>
+
+    <!-- Slide 4: + Sueldos -->
+    <div class="slide" id="slide4">
+        <div class="slide-title">Impacto de Gastos de Sueldos</div>
+        <div class="slide-subtitle">Gastos de personal sobre el resultado operativo</div>
+        <div class="chart-container">
+            <canvas id="chart4"></canvas>
+        </div>
+        <div class="footnote">Verde: Ingresos | Naranja: Estructura | Azul: Sueldos</div>
+    </div>
+
+    <!-- Slide 5: Todo + Porcentajes -->
+    <div class="slide" id="slide5">
+        <div class="slide-title">Resultado Final: Beneficios</div>
+        <div class="slide-subtitle">Ingresos menos todos los gastos operativos</div>
+        <div class="chart-container">
+            <canvas id="chart5"></canvas>
+            <div class="alert" style="top: 20px; left: 60px;">
+                <div class="alert-title">⚠️ ENERO</div>
+                Importación $45M<br>(Mercadería + Aduana)
+            </div>
+            <div class="alert" style="top: 20px; left: 320px;">
+                <div class="alert-title">⚠️ MAYO</div>
+                Pago ODOO $30M<br>(Implementación)
+            </div>
+            <div class="alert" style="top: 20px; right: 180px;">
+                <div class="alert-title">⚠️ SEPTIEMBRE</div>
+                Importación $70M<br>(Mercadería + Aduana)
+            </div>
+        </div>
+        <div class="footnote">Verde: Ingresos | Naranja: Estructura | Azul: Sueldos | Púrpura: Mercadería</div>
+    </div>
+
+    <!-- Slide 6: Tabla de Incidencia Porcentual -->
+    <div class="slide" id="slide6">
+        <div class="slide-title">Análisis de Incidencia Porcentual</div>
+        <div class="slide-subtitle">Participación de cada egreso sobre los ingresos totales</div>
+        <div class="content-container">
+            <table id="incidenceTable">
+                <thead>
+                    <tr>
+                        <th>Concepto</th>
+                        <th>Ene</th>
+                        <th>Feb</th>
+                        <th>Mar</th>
+                        <th>Abr</th>
+                        <th>May</th>
+                        <th>Jun</th>
+                        <th>Jul</th>
+                        <th>Ago</th>
+                        <th>Sep</th>
+                        <th>Oct</th>
+                        <th>Promedio</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+        </div>
+        <div class="footnote">Los porcentajes representan la incidencia de cada gasto sobre los ingresos del mes</div>
+    </div>
+
+    <!-- 
+    ============================================
+    EJEMPLO: Cómo agregar slides personalizadas
+    ============================================
+    
+    Para agregar una slide con texto e imagen, copia este template:
+    
+    <div class="slide" id="slide7">
+        <div class="slide-title">Tu Título Aquí</div>
+        <div class="slide-subtitle">Tu Subtítulo Aquí</div>
+        <div class="content-container">
+            <div class="custom-slide-content">
+                <div class="custom-slide-text">
+                    <h2>Encabezado Principal</h2>
+                    <p>Tu texto aquí. Podés escribir varios párrafos.</p>
+                    
+                    <h3>Subencabezado</h3>
+                    <ul>
+                        <li>Punto 1</li>
+                        <li>Punto 2</li>
+                        <li>Punto 3</li>
+                    </ul>
+                    
+                    <div class="highlight-box">
+                        <strong>Nota importante:</strong> Texto destacado aquí.
+                    </div>
+                </div>
+                
+                <div class="custom-slide-image">
+                    <img src="ruta/a/tu/imagen.jpg" alt="Descripción">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    Recordá:
+    1. Cambiar el id (slide7, slide8, etc.)
+    2. Actualizar totalSlides más abajo en el JavaScript
+    3. Subir tus imágenes al mismo directorio que este archivo HTML
+    -->
+
+    <div class="navigation">
+        <button class="nav-button" id="prevBtn" onclick="previousSlide()">← Anterior</button>
+        <button class="nav-button" id="nextBtn" onclick="nextSlide()">Siguiente →</button>
+    </div>
+
+    <script>
+        // Datos
+        const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct'];
+        const ingresos = [152.1, 165.7, 203.8, 254.3, 166.0, 314.1, 258.3, 344.3, 257.2, 469.0];
+        const estructura = [45.1, 34.4, 69.4, 41.9, 80.3, 59.2, 61.8, 94.3, 77.3, 92.9];
+        const sueldos = [65.8, 101.1, 74.1, 82.9, 81.9, 130.5, 88.0, 90.8, 107.3, 100.6];
+        const mercaderia = [86.3, 20.2, 35.9, 35.0, 30.9, 44.7, 76.8, 60.8, 114.4, 89.6];
+        
+        const beneficios = [-29.7, 6.0, 11.9, 37.2, -16.3, 25.4, 12.3, 28.6, -16.3, 39.6];
+
+        let currentSlide = 1;
+        const totalSlides = 6; // Actualizar este número cuando agregues más slides
+
+        // Generar tabla de incidencias
+        function generarTablaIncidencias() {
+            const tbody = document.getElementById('tableBody');
+            
+            // Calcular incidencias porcentuales
+            const calcularIncidencia = (valores) => {
+                return valores.map((val, i) => ((val / ingresos[i]) * 100).toFixed(1));
+            };
+            
+            const incEstructura = calcularIncidencia(estructura);
+            const incSueldos = calcularIncidencia(sueldos);
+            const incMercaderia = calcularIncidencia(mercaderia);
+            
+            const egresosTotales = meses.map((_, i) => estructura[i] + sueldos[i] + mercaderia[i]);
+            const incEgresos = calcularIncidencia(egresosTotales);
+            
+            // Calcular promedios
+            const promedio = (arr) => (arr.reduce((a, b) => parseFloat(a) + parseFloat(b), 0) / arr.length).toFixed(1);
+            
+            // Crear filas
+            const categorias = [
+                { nombre: 'Gastos de Estructura', datos: incEstructura, color: '#F57C00' },
+                { nombre: 'Gastos de Sueldos', datos: incSueldos, color: '#1565C0' },
+                { nombre: 'Compra de Mercadería', datos: incMercaderia, color: '#6A1B9A' },
+                { nombre: 'EGRESOS TOTALES', datos: incEgresos, color: '#C62828', bold: true }
+            ];
+            
+            categorias.forEach(cat => {
+                const tr = document.createElement('tr');
+                if (cat.bold) tr.style.fontWeight = '600';
+                
+                const tdLabel = document.createElement('td');
+                tdLabel.className = 'category-label';
+                tdLabel.textContent = cat.nombre;
+                tdLabel.style.color = cat.color;
+                tr.appendChild(tdLabel);
+                
+                cat.datos.forEach(val => {
+                    const td = document.createElement('td');
+                    td.textContent = val + '%';
+                    tr.appendChild(td);
+                });
+                
+                const tdProm = document.createElement('td');
+                tdProm.textContent = promedio(cat.datos) + '%';
+                tdProm.style.fontWeight = '600';
+                tdProm.style.background = '#f0f0f0';
+                tr.appendChild(tdProm);
+                
+                tbody.appendChild(tr);
+            });
+            
+            // Agregar fila de beneficios
+            const trBeneficios = document.createElement('tr');
+            trBeneficios.style.borderTop = '2px solid #2E7D32';
+            
+            const tdBenLabel = document.createElement('td');
+            tdBenLabel.className = 'category-label';
+            tdBenLabel.textContent = 'BENEFICIOS';
+            tdBenLabel.style.color = '#2E7D32';
+            trBeneficios.appendChild(tdBenLabel);
+            
+            beneficios.forEach(val => {
+                const td = document.createElement('td');
+                td.textContent = val + '%';
+                td.className = val >= 0 ? 'positive' : 'negative';
+                trBeneficios.appendChild(td);
+            });
+            
+            const tdBenProm = document.createElement('td');
+            const promBen = promedio(beneficios);
+            tdBenProm.textContent = promBen + '%';
+            tdBenProm.className = promBen >= 0 ? 'positive' : 'negative';
+            tdBenProm.style.fontWeight = '600';
+            tdBenProm.style.background = '#f0f0f0';
+            trBeneficios.appendChild(tdBenProm);
+            
+            tbody.appendChild(trBeneficios);
+        }
+
+        // Configuración común de gráficos
+        const commonOptions = {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        font: { size: 16 },
+                        padding: 20
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 500,
+                    ticks: {
+                        font: { size: 14 },
+                        callback: value => '$' + value + 'M'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Millones de Pesos ($M)',
+                        font: { size: 16 }
+                    }
+                },
+                x: {
+                    ticks: {
+                        font: { size: 14 }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Mes',
+                        font: { size: 16 }
+                    }
+                }
+            }
+        };
+
+        // Chart 2: Solo Ingresos
+        const chart2 = new Chart(document.getElementById('chart2'), {
+            type: 'bar',
+            data: {
+                labels: meses,
+                datasets: [{
+                    label: 'Ingresos',
+                    data: ingresos,
+                    backgroundColor: '#2E7D32',
+                }]
+            },
+            options: commonOptions
+        });
+
+        // Chart 3: Ingresos + Estructura (2 barras separadas)
+        const chart3 = new Chart(document.getElementById('chart3'), {
+            type: 'bar',
+            data: {
+                labels: meses,
+                datasets: [
+                    {
+                        label: 'Ingresos',
+                        data: ingresos,
+                        backgroundColor: '#2E7D32',
+                    },
+                    {
+                        label: 'Gastos Estructura',
+                        data: estructura,
+                        backgroundColor: '#F57C00',
+                    }
+                ]
+            },
+            options: commonOptions
+        });
+
+        // Chart 4: Ingresos + Estructura + Sueldos (con stacks separados)
+        const chart4 = new Chart(document.getElementById('chart4'), {
+            type: 'bar',
+            data: {
+                labels: meses,
+                datasets: [
+                    {
+                        label: 'Ingresos',
+                        data: ingresos,
+                        backgroundColor: '#2E7D32',
+                        stack: 'stack1'
+                    },
+                    {
+                        label: 'Gastos Estructura',
+                        data: estructura,
+                        backgroundColor: '#F57C00',
+                        stack: 'stack2'
+                    },
+                    {
+                        label: 'Gastos Sueldos',
+                        data: sueldos,
+                        backgroundColor: '#1565C0',
+                        stack: 'stack2'
+                    }
+                ]
+            },
+            options: commonOptions
+        });
+
+        // Chart 5: Todo con porcentajes
+        const chart5 = new Chart(document.getElementById('chart5'), {
+            type: 'bar',
+            data: {
+                labels: meses,
+                datasets: [
+                    {
+                        label: 'Ingresos',
+                        data: ingresos,
+                        backgroundColor: '#2E7D32',
+                        stack: 'stack1'
+                    },
+                    {
+                        label: 'Gastos Estructura',
+                        data: estructura,
+                        backgroundColor: '#F57C00',
+                        stack: 'stack2'
+                    },
+                    {
+                        label: 'Gastos Sueldos',
+                        data: sueldos,
+                        backgroundColor: '#1565C0',
+                        stack: 'stack2'
+                    },
+                    {
+                        label: 'Compra Mercadería',
+                        data: mercaderia,
+                        backgroundColor: '#6A1B9A',
+                        stack: 'stack2'
+                    }
+                ]
+            },
+            options: {
+                ...commonOptions,
+                plugins: {
+                    ...commonOptions.plugins,
+                    tooltip: {
+                        callbacks: {
+                            afterLabel: function(context) {
+                                if (context.datasetIndex === 0) {
+                                    return 'Beneficio: ' + beneficios[context.dataIndex] + '%';
+                                }
+                                return '';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        function showSlide(n) {
+            const slides = document.querySelectorAll('.slide');
+            slides.forEach(slide => slide.classList.remove('active'));
+            
+            currentSlide = Math.max(1, Math.min(n, totalSlides));
+            slides[currentSlide - 1].classList.add('active');
+            
+            document.getElementById('currentSlide').textContent = currentSlide;
+            document.getElementById('prevBtn').disabled = currentSlide === 1;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides;
+        }
+
+        function nextSlide() {
+            showSlide(currentSlide + 1);
+        }
+
+        function previousSlide() {
+            showSlide(currentSlide - 1);
+        }
+
+        // Navegación con teclado
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                previousSlide();
+            }
+        });
+
+        // Inicializar
+        generarTablaIncidencias();
+        showSlide(1);
+    </script>
+</body>
+</html>
