@@ -59,31 +59,107 @@
 
         /* Slide 1 - Portada */
         .slide-portada {
-            background: linear-gradient(135deg, #2d5016 0%, #4a7c2a 100%);
+            background: linear-gradient(135deg, #2d5016 0%, #4a7c2a 50%, #5d9a35 100%);
             justify-content: center;
             align-items: center;
             color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .slide-portada::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.3; }
+            50% { transform: scale(1.2); opacity: 0.5; }
+        }
+
+        .portada-content {
+            z-index: 1;
+            text-align: center;
+        }
+
+        .slide-portada .logo-eccosur {
+            width: 280px;
+            height: auto;
+            margin-bottom: 40px;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+            animation: fadeInDown 1s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .slide-portada h1 {
             font-size: 3.5em;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             text-align: center;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4);
+            font-weight: 700;
+            letter-spacing: -1px;
+            animation: fadeInUp 1s ease-out 0.2s both;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .slide-portada h2 {
             font-size: 2em;
-            margin-bottom: 40px;
+            margin-bottom: 50px;
             text-align: center;
             font-weight: 300;
-            opacity: 0.9;
+            opacity: 0.95;
+            animation: fadeInUp 1s ease-out 0.4s both;
         }
 
-        .slide-portada .logo {
-            font-size: 1.2em;
-            margin-top: 40px;
-            opacity: 0.8;
+        .slide-portada .presentation-info {
+            font-size: 1.3em;
+            margin-top: 50px;
+            opacity: 0.9;
+            line-height: 1.8;
+            animation: fadeInUp 1s ease-out 0.6s both;
+        }
+
+        .slide-portada .presentation-info .vistage {
+            font-weight: 600;
+            font-size: 1.1em;
+            margin-bottom: 8px;
+        }
+
+        .slide-portada .presentation-info .presenter {
+            font-weight: 400;
+            margin-bottom: 8px;
+        }
+
+        .slide-portada .presentation-info .date {
+            font-weight: 300;
+            font-size: 0.95em;
+            opacity: 0.85;
         }
 
         /* Slides con gráficos */
@@ -217,12 +293,23 @@
                 padding: 20px;
             }
 
+            .slide-portada .logo-eccosur {
+                width: 200px;
+                margin-bottom: 30px;
+            }
+
             .slide-portada h1 {
                 font-size: 2em;
             }
 
             .slide-portada h2 {
                 font-size: 1.3em;
+                margin-bottom: 30px;
+            }
+
+            .slide-portada .presentation-info {
+                font-size: 1.1em;
+                margin-top: 30px;
             }
 
             .slide-chart h2 {
@@ -244,11 +331,17 @@
     <div class="presentation-container">
         <!-- Slide 1: Portada -->
         <div class="slide slide-portada active">
-            <h1>Estado de Resultados</h1>
-            <h2>Enero - Octubre 2025</h2>
-            <div class="logo">
-                <p>🏢 ECCOSUR</p>
-                <p style="font-size: 0.9em; margin-top: 10px;">www.eccosur.com</p>
+            <div class="portada-content">
+                <img src="data:image/webp;base64,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" 
+                     alt="ECCOSUR Logo" 
+                     class="logo-eccosur">
+                <h1>Estado de Resultados</h1>
+                <h2>Enero - Octubre 2025</h2>
+                <div class="presentation-info">
+                    <div class="vistage">VISTAGE G 159</div>
+                    <div class="presenter">José Bibiloni</div>
+                    <div class="date">Noviembre 2025</div>
+                </div>
             </div>
         </div>
 
